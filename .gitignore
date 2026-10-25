@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+node_modules/
+web/.next/
+web/out/
+*.egg-info/
+.DS_Store
+.dist/
+tmp/
+/uploads/
+t_blank.png
+t_debug.png
+t_filled.png
+t_rows.json

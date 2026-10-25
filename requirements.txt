@@ -1,0 +1,10 @@
+numpy
+pillow
+scipy
+opencv-python-headless
+pymupdf
+pytesseract
+networkx
+anthropic
+pytest
+certifi

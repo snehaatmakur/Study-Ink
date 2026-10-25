@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Study Ink</title>
+<style>
+  :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#404040;background:#fcfaf4;font-synthesis:none}
+  *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}
+  button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:#78a6f0;color:white;font-weight:650}
+  button.secondary{background:transparent;color:#404040;border:1px solid #404040}
+  button:disabled{opacity:.55;cursor:wait}
+  
+  header{height:68px;padding:0 24px;display:flex;align-items:center;gap:22px;background:#78a6f0;color:#fcfaf4;border-bottom:none;position:sticky;top:0;z-index:3}
+  header button.secondary{color:#fcfaf4;border-color:#fcfaf4}
+  .badge{margin-left:auto;font-size:12px;font-weight:650;padding:5px 10px;border-radius:999px;background:rgba(252,250,244,.2);color:#fcfaf4;border:1px solid rgba(252,250,244,.55);white-space:nowrap}
+  .badge.on{background:#fcfaf4;color:#2f6f4a}
+  .badge.warn{background:#fff3d6;color:#7a4b00;border-color:#e9c46a}
+  .badge + .ob-open{margin-left:0}
+  .brand{font-weight:750;letter-spacing:-.03em}
+  .tabs{display:flex;gap:6px}
+  .tab{background:transparent;color:#fcfaf4;opacity:0.8;border-radius:8px}
+  .tab.active{background:#fcfaf4;color:#78a6f0;opacity:1}
+  
+  main{max-width:1500px;margin:auto;padding:24px}.view{display:none}.view.active{display:block}
+  .intro h1{font-size:27px;margin:0 0 6px;letter-spacing:-.03em}
+  .intro p{margin:0;color:#555555;max-width:760px;line-height:1.5}
+  .panel{background:white;border:1px solid #e2e2e2;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(64,64,64,0.08)}
+  .grid{display:grid;grid-template-columns:minmax(250px,1fr) minmax(250px,1fr);gap:16px;margin-top:18px}
+  .controls{display:grid;grid-template-columns:repeat(5,minmax(105px,1fr));gap:12px;margin:16px 0}
+  .field label{display:block;font-size:12px;font-weight:700;color:#555555;margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid #cccccc;border-radius:8px;padding:9px;background:#fff;color:#404040}
+  .field textarea{min-height:90px;resize:vertical}
+  .field input[type=range]{padding:0;accent-color:#78a6f0}
+  .action-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .status{color:#555555;font-size:13px;min-height:20px}
+  .preview{min-height:270px;display:flex;align-items:center;justify-content:center;background:#fafafa;border:1px dashed #cccccc;border-radius:10px;overflow:hidden;color:#777777}
+  .preview img{display:block;max-width:100%;max-height:490px;object-fit:contain}
+  .drop{min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed #cccccc;border-radius:10px;padding:18px;color:#555555;background:#fafafa;gap:9px}
+  .drop input{max-width:240px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .json-editor{width:100%;min-height:330px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;tab-size:2}
+  .small{font-size:12px;color:#777777;line-height:1.45}
+  .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 12px}
+  .section-head h2{font-size:16px;margin:0}
+  .text-layout{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}
+  .text-layout textarea{height:260px}
+  .text-preview-container{width:100%;min-height:75vh;max-height:85vh;overflow-y:auto;background:#ffffff;border:1px dashed #cccccc;border-radius:12px;padding:16px;display:flex;justify-content:center;align-items:flex-start}
+  .text-preview-container img{width:100%;height:auto;display:block;object-fit:contain}
+  .study-copy{color:#404040;line-height:1.6;white-space:pre-wrap}
+  .study-copy h3{margin:14px 0 6px;font-size:14px}
+  .study-copy p{margin:0 0 8px}
+  .study-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:16px;align-items:start}
+  .study-stage{min-height:420px;align-items:flex-start;justify-content:center;overflow:auto;padding:12px}
+  .study-page{position:relative;flex:none;max-width:none;box-shadow:0 3px 14px rgba(64,64,64,0.08)}
+  .study-page img{display:block;width:100%;height:auto;max-width:none;max-height:none}
+  .study-blank-layer{position:absolute;border:2px solid transparent;border-radius:6px}
+  .study-blank-layer.selected{z-index:20;border-color:#78a6f0aa;background:#78a6f011}
+  .study-blank-layer[data-status="correct"]{border-color:#1b8e56aa}
+  .study-blank-layer[data-status="wrong"]{border-color:#c17a22aa}
+  .study-ink{display:block;touch-action:none;cursor:crosshair;background:transparent}
+  .study-blank-tools{position:absolute;top:calc(100% + 3px);left:0;z-index:25;display:flex;min-width:230px;flex-direction:column;gap:6px;padding:8px;background:#fffffff2;border:1px solid #cccccc;border-radius:9px;box-shadow:0 5px 16px rgba(64,64,64,0.15)}
+  .study-blank-tools[hidden]{display:none}
+  .study-blank-tools.align-end{left:auto;right:0}
+  .study-blank-tools .tool-actions{display:flex;gap:5px}
+  .study-blank-tools button{padding:6px 9px;font-size:12px}
+  .study-blank-tools input{width:100%;min-width:0;border:1px solid #cccccc;border-radius:7px;padding:6px 8px;font-size:12px}
+  .study-blank-tools .tool-feedback{font-size:11px;line-height:1.35;color:#555555}
+  .study-side{display:grid;gap:12px}
+  .study-side h2{font-size:16px;margin:0}
+  .study-solver{max-height:220px;overflow:auto;white-space:pre-wrap;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#fcfaf4;border-radius:8px;padding:10px}
+  @media(max-width:850px){main{padding:14px}.grid,.two-col,.text-layout,.study-layout{grid-template-columns:1fr}.controls{grid-template-columns:repeat(2,1fr)}header{padding:0 12px;gap:10px}.intro h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header><div class="brand">Study Ink</div><nav class="tabs"><button class="tab active" data-view="slide-view">Diagram → ink</button><button class="tab" data-view="text-view">Text → ink</button><button class="tab" data-view="study-view">Fill in the Ink (Study Companion)</button></nav><span id="vision-badge" class="badge" title="Checking handwriting reader…" hidden></span><button class="secondary ob-open" id="open-onboarding" type="button">Use my handwriting</button></header>
+<main>
+  <section class="view active" id="slide-view">
+    <div class="intro"><h1>Turn a lecture slide into an ink diagram</h1><p>Upload a slide, extract its study notes, and redraw the diagram with handwritten glyphs and strokes. Print the combined study sheet to PDF for Notability.</p></div>
+    <div class="grid">
+      <section class="panel">
+        <div class="section-head"><h2>1 · Upload a lecture slide</h2><span class="small">PNG, JPEG, WebP, or GIF · up to 10 MB</span></div>
+        <div class="drop"><strong>Choose a slide image</strong><input id="slide-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><span id="file-name" class="small">The image is sent to Claude only when you select “Analyze slide”.</span></div>
+        <div class="action-row"><button class="secondary" id="try-sample">Try a sample</button><span class="small">Preview the handwritten workflow without an API key.</span></div>
+        <div class="preview" style="margin-top:12px"><span id="source-empty">Your slide preview will appear here.</span><img id="source-preview" alt="Uploaded lecture slide" hidden></div>
+      </section>
+      <section class="panel">
+        <div class="section-head"><h2>2 · Tune the extraction</h2><span class="small">Claude Vision</span></div>
+        <div class="field"><label for="model">Model</label><select id="model"><option value="claude-sonnet-5-5">Claude Sonnet 5.5 · balanced</option><option value="claude-haiku-5-5">Claude Haiku 5.5 · faster</option></select></div>
+        <div class="field" style="margin-top:12px"><label for="prompt">Instructions for Claude</label><textarea id="prompt" placeholder="On the first pass, focus on the graph in the lower right. After analysis, describe edits to refine the diagram."></textarea><span class="small">Analyze once, then add a correction here and analyze again to refine the same diagram.</span></div>
+        <div class="field" style="margin-top:10px"><label><input id="simplify-complex" type="checkbox" checked style="width:auto"> Simplify automatically if the diagram is too dense</label><span class="small">Keep the main idea, important labels, and key connections; omit secondary detail when needed.</span></div>
+        <div class="action-row"><button id="analyze">Analyze slide</button><span class="status" id="analyze-status">Set ANTHROPIC_API_KEY before starting the app.</span></div>
+        <p class="small">Redraw mode recreates diagram lines and labels as handwritten strokes and glyphs. Dense chemistry may need review because the model estimates geometry from the image. Source-preserving mode remains available as a fallback.</p>
+      </section>
+    </div>
+    <div class="two-col">
+      <section class="panel"><div class="section-head"><h2>3 · Review or edit the diagram structure</h2><div class="action-row" style="margin:0"><button class="secondary" id="save-case">Save case JSON</button><button class="secondary" id="render-diagram">Render edited JSON</button><button class="secondary" id="study-pdf" disabled>Print study sheet / PDF</button></div></div><div class="field"><textarea class="json-editor" id="diagram-json" spellcheck="false" aria-label="Editable diagram JSON">{
+  "title": "Example slide labels",
+  "labels": [
+    {"id":"l1","text":"ADENINE","x":0.35,"y":0.18,"w":0.12,"h":0.04},
+    {"id":"l2","text":"THYMINE","x":0.65,"y":0.22,"w":0.12,"h":0.04}
+  ]
+}</textarea></div><div class="controls">
+          <div class="field"><label for="profile">Handwriting sample</label><select id="profile">__PROFILES__</select></div>
+          <div class="field"><label id="paper-label" for="paper">Paper</label><select id="paper"><option value="white">White</option><option value="lined">Lined</option><option value="grid">Grid</option></select></div>
+          <div class="field"><label for="label-size">Label size</label><input id="label-size" type="number" min="16" max="80" value="42"></div>
+          <div class="field"><label for="neatness">Neatness <span id="neatness-value">0.5</span></label><input id="neatness" type="range" min="0" max="1" step="0.05" value="0.5"></div>
+          <div class="field"><label for="render-mode">Geometry</label><select id="render-mode"><option value="redraw">Redraw diagram by hand</option><option value="source">Preserve uploaded slide</option><option value="vector">Rebuild from vector JSON</option></select></div>
+        </div>
+        <div class="action-row"><button class="secondary" id="download-diagram">Download PNG</button><span class="status" id="render-status"></span></div>
+      </section>
+      <section class="panel"><div class="section-head"><h2>4 · Handwritten result</h2><span class="small">Generated from your glyph profile</span></div><div class="preview"><span id="diagram-empty">Render a diagram to preview it here.</span><img id="diagram-preview" alt="Handwritten diagram" hidden></div></section>
+    </div>
+    <section class="panel" style="margin-top:16px"><div class="section-head"><h2>Slide notes and study guide</h2><label class="small"><input id="study-recall" type="checkbox" style="width:auto"> Add active-recall blanks to the PDF</label></div><div class="study-copy" id="study-notes-preview">Analyze a lecture slide to extract its notes and a source-grounded study guide.</div></section>
+  </section>
+
+  <section class="view" id="text-view">
+    <div class="intro"><h1>Text to handwriting</h1><p>Type or import notes, add an active-recall pass, and render them using the selected handwriting profile.</p></div>
+    <div class="panel text-layout" style="margin-top:18px"><div>
+      <div class="field"><label for="text-profile">Profile</label><select id="text-profile">__PROFILES__</select></div>
+      <div class="field" style="margin-top:12px"><label for="text-files">Add notes from files</label><input id="text-files" type="file" accept=".txt,.pdf,.png,.jpg,.jpeg" multiple><span class="small" id="text-file-status">TXT and PDF text is extracted locally; image files use local OCR.</span></div>
+      <div class="field" style="margin-top:12px"><label for="text-input">Text</label><textarea id="text-input">Suppose R3 has learned the full network graph.
+We know all the links, their status (up or down?), and their costs.
+R3 can run a graph algorithm to compute paths:
+next-hop = R2, cost = 1 + 1 + 1 = 3.
+Dijkstra's #1 rule: never use negative weights!</textarea></div>
+      <div class="controls" style="grid-template-columns:1fr 1fr"><div class="field"><label for="text-neat">Neatness <span id="text-neat-value">0.5</span></label><input id="text-neat" type="range" min="0" max="1" step="0.05" value="0.5"></div><div class="field"><label for="text-size">Size</label><input id="text-size" type="number" min="20" max="120" value="58"></div><div class="field"><label for="text-paper">Paper</label><select id="text-paper"><option>lined</option><option>grid</option><option>white</option><option>none</option></select></div><div class="field"><label for="text-ink">Ink</label><input id="text-ink" type="color" value="#0a5a28"></div></div>
+      <div class="field" style="margin-top:8px"><label><input id="active-recall" type="checkbox" style="width:auto"> Smart Quick Mode · fill in the blanks</label><span class="small">Automatically hides about 25% of key terms. Re-roll to make a different worksheet.</span></div>
+      <div class="action-row"><button id="render-text">Render text</button><button class="secondary" id="reroll-text">Re-roll variation</button><span id="text-status" class="status"></span></div>
+    </div>
+    <div class="text-preview-container" id="text-preview-container">
+      <span id="text-empty">Your handwriting pages will appear here.</span>
+    </div>
+  </div>
+  </section>
+
+  <section class="view" id="study-view">
+    <div class="intro"><h1>Fill in the Ink (Study Companion)</h1><p>Practice from handwritten visual notes: fill the blanks, write with a mouse or Pencil, check answers, and redraw diagrams from memory.</p></div>
+    <div class="panel" style="margin-top:18px">
+      <div class="controls" style="grid-template-columns:minmax(180px,1.2fr) minmax(150px,1fr) minmax(150px,1fr)">
+        <div class="field"><label for="study-lesson">Lesson</label><select id="study-lesson"></select></div>
+        <div class="field"><label for="study-profile">Handwriting sample</label><select id="study-profile">__PROFILES__</select></div>
+        <div class="field"><label for="study-neat">Neatness <span id="study-neat-value">0.55</span></label><input id="study-neat" type="range" min="0" max="1" step="0.05" value="0.55"></div>
+      </div>
+      <div class="action-row"><span class="small" id="study-score">Loading practice…</span><button class="secondary" id="study-reroll">Re-roll ink</button><button class="secondary" id="study-refresh">Refresh</button><button class="secondary" id="study-reveal-all">Reveal all</button><button id="study-export-pdf">Export PDF</button><button class="secondary" id="study-export-json">Export JSON</button></div>
+      <div class="status" id="study-status" aria-live="polite" style="margin-top:8px"></div>
+    </div>
+    <div class="study-layout">
+      <section class="panel">
+        <div class="section-head"><h2 id="study-page-title">Handwritten practice page</h2><span class="small">Write in a blank, then use the answer panel.</span></div>
+        <div class="preview study-stage" id="study-stage"><div id="study-page" class="study-page" hidden><img id="study-image" alt="Handwritten study practice page"></div><span id="study-empty">Your interactive practice page will appear here.</span></div>
+      </section>
+      <aside class="study-side">
+        <section class="panel"><h2>Answer check</h2><p class="small" id="study-selected-hint" style="margin:8px 0">Select an underlined blank or a graph area to practice.</p><div class="field"><label for="study-answer">Answer or handwriting transcription</label><input id="study-answer" placeholder="Type what you wrote if needed"></div><div class="action-row"><button id="study-check" disabled>Check answer</button><button class="secondary" id="study-clear" disabled>Clear ink</button><button class="secondary" id="study-reveal" disabled>Reveal</button></div><p class="status" id="study-feedback" style="margin-top:8px"></p></section>
+        <section class="panel"><h2>Redraw compare</h2><p class="small" style="margin:8px 0">Sketch the graph in the large blank, then compare it with the handwritten reference.</p><button class="secondary" id="study-compare" disabled>Show reference overlay</button><div id="study-reference-wrap" hidden style="margin-top:10px"><img id="study-reference" alt="Handwritten reference graph" style="width:100%;border:1px solid #dce4dd;border-radius:8px"></div></section>
+        <section class="panel"><h2>Computed graph paths</h2><p class="small" style="margin:8px 0">Shortest paths and costs are calculated from the lesson graph.</p><button class="secondary" id="study-solve">Show computed paths</button><pre id="study-solver-result" class="study-solver" hidden></pre></section>
+        <section class="panel"><h2>How to practice</h2><ol class="small" style="padding-left:20px;line-height:1.6"><li>Write in an underlined blank or the redraw area.</li><li>Press Check: Claude reads your ink (answers are graded in code, never by the model), or type what you wrote.</li><li>Use Reveal for an answer and Reveal all for the full key.</li><li>Export the page as a PDF or its editable JSON model.</li></ol><p class="small" id="study-vision-note">Claude reads your handwriting and the answer is then checked in code. Put <code>ANTHROPIC_API_KEY</code> in the <code>.env</code> file next to <code>app.py</code> and restart to enable it; otherwise type what you wrote.</p></section>
+      </aside>
+    </div>
+  </section>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let selectedFile = null, diagramPngUrl = "", studyPreviewUrl = "", seed = 7, textSeed = 7, hasAnalyzedSlide = false;
+  document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b === button));
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === button.dataset.view));
+    if (button.dataset.view === "study-view") initStudy();
+  }));
+  async function initVisionBadge(){
+    const badge=$("vision-badge");
+    try{
+      const health=await (await fetch("/study/health")).json(),v=health.vision||{};
+      badge.hidden=false;badge.classList.toggle("on",!!v.enabled);badge.classList.toggle("warn",!v.enabled);
+      badge.textContent=v.enabled?"Claude reads your handwriting":"Vision off · typed answers";
+      badge.title=v.enabled?"Reading handwriting with "+v.model:"Set ANTHROPIC_API_KEY in .env and restart the app";
+      const note=$("study-vision-note");if(note&&v.enabled)note.textContent="Claude ("+v.model+") reads your handwriting; the answer is then checked in code.";
+    }catch{badge.hidden=false;badge.classList.add("warn");badge.textContent="App offline";}
+  }
+  initVisionBadge();
+  function showImage(img, empty, url) { img.src = url; img.hidden = false; empty.hidden = true; }
+  function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(",")[1]); reader.onerror = reject; reader.readAsDataURL(file); }); }
+  $("slide-file").addEventListener("change", () => {
+    selectedFile = $("slide-file").files[0] || null;
+    if (!selectedFile) return;
+    hasAnalyzedSlide = false;
+    $("analyze").textContent = "Analyze slide";
+    $("analyze-status").textContent = "Ready to analyze.";
+    showStudyNotes({title:"", notes:[], study_guide:""});
+    $("file-name").textContent = `${selectedFile.name} · ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`;
+    showImage($("source-preview"), $("source-empty"), URL.createObjectURL(selectedFile));
+    $("analyze-status").textContent = "Ready to analyze.";
+  });
+  const slideDrop = document.querySelector(".drop");
+  slideDrop.addEventListener("click", event => { if (event.target !== $("slide-file")) $("slide-file").click(); });
+  slideDrop.addEventListener("dragover", event => { event.preventDefault(); slideDrop.style.borderColor = "#365d47"; });
+  slideDrop.addEventListener("dragleave", () => { slideDrop.style.borderColor = ""; });
+  slideDrop.addEventListener("drop", event => {
+    event.preventDefault(); slideDrop.style.borderColor = "";
+    const file = Array.from(event.dataTransfer?.files || []).find(candidate => candidate.type.startsWith("image/"));
+    if (!file) return;
+    const transfer = new DataTransfer(); transfer.items.add(file); $("slide-file").files = transfer.files;
+    $("slide-file").dispatchEvent(new Event("change", {bubbles:true}));
+  });
+  window.addEventListener("paste", event => {
+    const item = Array.from(event.clipboardData?.items || []).find(candidate => candidate.kind === "file" && candidate.type.startsWith("image/"));
+    const file = item?.getAsFile();
+    if (!file) return;
+    const pasted = new File([file], "pasted-slide.png", {type:file.type || "image/png"});
+    const transfer = new DataTransfer(); transfer.items.add(pasted); $("slide-file").files = transfer.files;
+    $("slide-file").dispatchEvent(new Event("change", {bubbles:true}));
+    $("analyze-status").textContent = "Screenshot pasted. Analyze the slide when ready.";
+  });
+  $("neatness").addEventListener("input", () => $("neatness-value").textContent = $("neatness").value);
+  $("text-neat").addEventListener("input", () => $("text-neat-value").textContent = $("text-neat").value);
+  function updateGeometryControls() {
+    const usesSource = $("render-mode").value !== "vector";
+    $("paper").disabled = usesSource;
+    $("paper-label").textContent = usesSource ? "Paper · slide canvas" : "Paper";
+  }
+  function showStudyNotes(diagram) {
+    const preview = $("study-notes-preview");
+    preview.replaceChildren();
+    if (diagram.title) {
+      const title = document.createElement("h3"); title.textContent = diagram.title; preview.appendChild(title);
+    }
+    if (diagram.study_guide) {
+      const heading = document.createElement("h3"); heading.textContent = "Study guide"; preview.appendChild(heading);
+      const guide = document.createElement("p"); guide.textContent = diagram.study_guide; preview.appendChild(guide);
+    }
+    if (diagram.notes?.length) {
+      const heading = document.createElement("h3"); heading.textContent = "Slide notes"; preview.appendChild(heading);
+      const list = document.createElement("ul");
+      diagram.notes.forEach(note => { const item = document.createElement("li"); item.textContent = note; list.appendChild(item); });
+      preview.appendChild(list);
+    }
+    if (!preview.childElementCount) preview.textContent = "No study notes were returned. You can still edit the diagram JSON and render it.";
+    $("study-pdf").disabled = !(diagram.title || diagram.study_guide || diagram.notes?.length);
+  }
+  $("render-mode").addEventListener("change", updateGeometryControls);
+  updateGeometryControls();
+  $("analyze").addEventListener("click", async () => {
+    if (!selectedFile) { $("analyze-status").textContent = "Choose a slide image first."; return; }
+    if (selectedFile.size > 10 * 1024 * 1024) { $("analyze-status").textContent = "The image must be under 10 MB."; return; }
+    $("analyze").disabled = true; $("analyze-status").textContent = "Claude is reading the slide…";
+    try {
+      const payload = {image_base64: await fileToBase64(selectedFile), media_type: selectedFile.type, model: $("model").value, extra_instructions: $("prompt").value, current_diagram: hasAnalyzedSlide ? JSON.parse($("diagram-json").value) : null, simplify_complex: $("simplify-complex").checked};
+      $("analyze-status").textContent = hasAnalyzedSlide ? "Claude is refining the current diagram…" : "Claude is reading the slide…";
+      const response = await fetch("/analyze-slide", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Slide analysis failed.");
+      $("diagram-json").value = JSON.stringify(result.diagram, null, 2);
+      hasAnalyzedSlide = true;
+      $("analyze").textContent = "Refine diagram";
+      showStudyNotes(result.diagram);
+      const labels = (result.diagram.labels || []).length, strokes = (result.diagram.strokes || []).length;
+      $("analyze-status").textContent = labels || strokes ? `Mapped ${labels} labels and ${strokes} line strokes.` : "Claude found no diagram components. Try a tighter crop or add instructions, then analyze again.";
+      await renderDiagram();
+    } catch (error) { $("analyze-status").textContent = error.message; }
+    finally { $("analyze").disabled = false; }
+  });
+  $("try-sample").addEventListener("click", async () => {
+    selectedFile = null;
+    hasAnalyzedSlide = false;
+    $("slide-file").value = "";
+    $("file-name").textContent = "Sample flowchart · no upload or API key needed";
+    $("source-preview").hidden = true;
+    $("source-empty").hidden = false;
+    $("render-mode").value = "vector";
+    updateGeometryControls();
+    const sample = {
+      title:"A simple decision flow",
+      notes:["Check whether the input is ready.","If it is ready, continue to the next step."],
+      study_guide:"A process checks a condition before choosing the next action.",
+      nodes:[
+        {id:"start",kind:"box",text:"Start",x:0.18,y:0.5,w:0.2,h:0.17},
+        {id:"ready",kind:"diamond",text:"Ready?",x:0.5,y:0.5,w:0.24,h:0.2},
+        {id:"done",kind:"circle",text:"Continue",x:0.82,y:0.5,w:0.2,h:0.17}
+      ],
+      edges:[{from:"start",to:"ready",directed:true},{from:"ready",to:"done",label:"yes",directed:true}],
+      labels:[],strokes:[]
+    };
+    $("diagram-json").value = JSON.stringify(sample,null,2);
+    showStudyNotes(sample);
+    $("analyze-status").textContent = "Sample loaded. Explore the editable diagram and printable study sheet.";
+    await renderDiagram();
+  });
+  async function renderDiagram() {
+    $("render-status").textContent = "Rendering…";
+    try {
+      const diagram = JSON.parse($("diagram-json").value);
+      showStudyNotes(diagram);
+      let endpoint = "/render-diagram";
+      const payload = {diagram, profile:$("profile").value, paper:$("paper").value, label_size:+$("label-size").value, neatness:+$("neatness").value, seed};
+      if ($("render-mode").value === "source" || $("render-mode").value === "redraw") {
+        if (!selectedFile) throw new Error("Upload the source slide to size the handwritten redraw.");
+        endpoint = $("render-mode").value === "redraw" ? "/render-redrawn" : "/render-over-source";
+        payload.source_base64 = await fileToBase64(selectedFile);
+      }
+      const response = await fetch(endpoint, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)});
+      if (!response.ok) throw new Error(await response.text());
+      const keptPrinted = Number(response.headers.get("X-Labels-Kept-Printed") || 0);
+      if (diagramPngUrl) URL.revokeObjectURL(diagramPngUrl);
+      diagramPngUrl = URL.createObjectURL(await response.blob());
+      studyPreviewUrl = diagramPngUrl;
+      showImage($("diagram-preview"), $("diagram-empty"), diagramPngUrl);
+      $("render-status").textContent = keptPrinted
+        ? `Rendered. ${keptPrinted} label(s) stayed printed because this profile lacks those glyphs.`
+        : `Rendered ${diagram.labels?.length || 0} handwritten labels and ${diagram.strokes?.length || 0} strokes. Review the result and edit JSON if needed.`;
+    } catch (error) { $("render-status").textContent = error.message; }
+  }
+  $("render-diagram").addEventListener("click", renderDiagram);
+  async function printStudySheet() {
+    try {
+      const diagram = JSON.parse($("diagram-json").value);
+      const popup = window.open("", "_blank");
+      if (!popup) throw new Error("Allow pop-ups to open the printable study sheet.");
+      popup.document.write("<!doctype html><title>Preparing study sheet</title><p style='font:16px system-ui;padding:24px;color:#293e34'>Preparing your handwritten study sheet…</p>");
+      const handwrittenNotes = [diagram.title, ...(diagram.notes || []).map(note => `• ${note}`), ...(diagram.labels || []).map(label => label.text ? `• ${label.text}` : "")].filter(Boolean).join("\n");
+      let notesImage = "";
+      if (handwrittenNotes) {
+        const renderResponse = await fetch("/render", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({profile:$("profile").value, text:handwrittenNotes, active_recall:false, neatness:+$("neatness").value, size:42, paper:"white", ink:"#293e34", seed, width:1400})});
+        if (!renderResponse.ok) throw new Error("Could not render handwritten study notes.");
+        notesImage = URL.createObjectURL(await renderResponse.blob());
+      }
+      const escapeHtml = value => String(value ?? "").replace(/[&<>\"']/g, char => {
+        if (char === "&") return "&amp;";
+        if (char === "<") return "&lt;";
+        if (char === ">") return "&gt;";
+        return char === "\"" ? "&quot;" : "&#39;";
+      });
+      const source = [diagram.study_guide || "", ...(diagram.notes || []), ...(diagram.labels || []).map(label => label.text || "")].join(" ");
+      const stopWords = new Set("about above after again also among because before being between could does doing down each from have into its more most other over same should some than that their them then there these this those through under very what when where which while with would".split(" "));
+      const candidates = Array.from(new Set((source.match(/\b[A-Za-z][A-Za-z'-]{4,}\b/g) || []).map(word => word.toLowerCase())))
+        .filter(word => !stopWords.has(word));
+      let recallSeed = Array.from(source).reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 7);
+      const randomRecall = () => { recallSeed = (recallSeed * 1664525 + 1013904223) >>> 0; return recallSeed / 0x100000000; };
+      const hiddenTerms = new Set(candidates.filter(() => randomRecall() < 0.25));
+      if ($("study-recall").checked && !hiddenTerms.size && candidates.length) hiddenTerms.add(candidates[0]);
+      const maskTerms = value => String(value ?? "").replace(/\b[A-Za-z][A-Za-z'-]{4,}\b/g, word => hiddenTerms.has(word.toLowerCase()) ? "_".repeat(Math.min(word.length, 12)) : word);
+      const notes = (diagram.notes || []).map(note => `<li>${escapeHtml(note)}</li>`).join("");
+      const labels = (diagram.labels || []).map(label => label.text).filter(Boolean);
+      const diagramImageUrl = studyPreviewUrl || diagramPngUrl;
+      const diagramImage = diagramImageUrl ? `<img class="diagram" src="${diagramImageUrl}" alt="Handwritten lecture diagram">` : "";
+      const handwrittenNotesImage = notesImage ? `<img class="handwritten-notes" src="${notesImage}" alt="Handwritten slide notes">` : "";
+      const guide = String(diagram.study_guide || "");
+      const labelsMarkup = labels.length ? `<h2>Diagram labels</h2><ul>${labels.map(label => `<li>${escapeHtml(label)}</li>`).join("")}</ul>` : "";
+      const studyTitle = escapeHtml(diagram.title || "Lecture study notes");
+      const fullTextPage = `<section class="page"><h1>Study text for Notability Learn</h1><h2>${studyTitle}</h2>${guide ? `<h2>Study guide</h2><p>${escapeHtml(guide).replace(/\n/g,"<br>")}</p>` : ""}${notes ? `<h2>Slide notes</h2><ul>${notes}</ul>` : ""}${labelsMarkup}<p class="footer">Import this PDF into Notability. This text page is selectable for Learn, Smart Notes, flashcards, and quizzes.</p></section>`;
+      const recallPage = $("study-recall").checked
+        ? `<section class="page"><h1>Active-recall worksheet</h1><h2>${studyTitle}</h2>${guide ? `<h2>Study guide</h2><p>${escapeHtml(maskTerms(guide)).replace(/\n/g,"<br>")}</p>` : ""}${notes ? `<h2>Slide notes</h2><ul>${(diagram.notes || []).map(note => `<li>${escapeHtml(maskTerms(note))}</li>`).join("")}</ul>` : ""}${labels.length ? `<h2>Diagram labels</h2><ul>${labels.map(label => `<li>${escapeHtml(maskTerms(label))}</li>`).join("")}</ul>` : ""}<p class="footer">Fill in the missing terms from memory, then use the next page to check your answers.</p></section><section class="page"><h1>Answer key</h1><ul>${Array.from(hiddenTerms).map(term => `<li>${escapeHtml(term)}</li>`).join("")}</ul></section>`
+        : "";
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(diagram.title || "Study sheet")}</title><style>
+        @page{size:letter landscape;margin:.55in}*{box-sizing:border-box}body{font:16px/1.55 system-ui,sans-serif;color:#26332a;max-width:980px;margin:36px auto;padding:0 24px}h1,h2{color:#293e34}h1{font-size:28px;margin-bottom:8px}h2{font-size:18px;margin:22px 0 8px}.page{min-height:7.3in;page-break-after:always;padding:2px 0}.page:last-child{page-break-after:auto}.visuals{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;margin-top:14px}.diagram,.handwritten-notes{display:block;width:100%;max-height:5.65in;object-fit:contain;border:1px solid #dce4dd;border-radius:10px}.diagram{background:#fafbf9}.handwritten-notes{background:#fff}li{margin:5px 0}.footer{margin-top:24px;color:#68766d;font-size:12px}@media screen{body{max-width:980px;margin:32px auto;padding:0 24px}.page{border-bottom:1px solid #ddd;margin-bottom:28px}}
+      </style></head><body><section class="page"><h1>${studyTitle}</h1><p>Handwritten study sheet</p><div class="visuals">${diagramImage}${handwrittenNotesImage}</div></section>${fullTextPage}${recallPage}<script>window.onload=()=>window.print()<\/script></body></html>`);
+      popup.document.close();
+      if (notesImage) setTimeout(() => URL.revokeObjectURL(notesImage), 60000);
+    } catch (error) { $("render-status").textContent = error.message; }
+  }
+  $("study-pdf").addEventListener("click", printStudySheet);
+  $("save-case").addEventListener("click", () => {
+    try {
+      const record = {schema_version:1, source_file:selectedFile?.name || null, model:$("model").value, extra_instructions:$("prompt").value, diagram:JSON.parse($("diagram-json").value)};
+      const blob = new Blob([JSON.stringify(record,null,2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob), a=document.createElement("a"); a.href=url; a.download="diagram-case.json"; a.click(); URL.revokeObjectURL(url);
+    } catch(error) { $("render-status").textContent = error.message; }
+  });
+  $("download-diagram").addEventListener("click", () => { if (!diagramPngUrl) return; const a=document.createElement("a"); a.href=diagramPngUrl; a.download="handwritten-diagram.png"; a.click(); });
+  async function renderText() {
+    $("text-status").textContent = "Rendering…";
+    const body = {
+      profile: $("text-profile").value,
+      text: $("text-input").value,
+      active_recall: $("active-recall").checked,
+      neatness: +$("text-neat").value,
+      size: +$("text-size").value,
+      paper: $("text-paper").value,
+      ink: $("text-ink").value,
+      seed: textSeed,
+      width: 1400
+    };
+
+    try {
+      const r = await fetch("/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error(await r.text());
+
+      const blob = await r.blob();
+      const container = $("text-preview-container");
+      container.replaceChildren();
+
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(blob);
+      img.alt = "Rendered handwriting";
+
+      container.appendChild(img);
+      $("text-status").textContent = "";
+    } catch (error) {
+      $("text-status").textContent = error.message;
+    }
+  }
+  $("render-text").addEventListener("click", renderText);
+  $("active-recall").addEventListener("change", renderText);
+  $("text-files").addEventListener("change", async () => {
+    const files = Array.from($("text-files").files || []);
+    if (!files.length) return;
+    $("text-file-status").textContent = "Extracting text locally…";
+    const extracted = [];
+    try {
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) throw new Error(`${file.name} is over 10 MB.`);
+        const result = await fetch("/extract", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({filename:file.name, data:await fileToBase64(file)})});
+        const payload = await result.json();
+        if (!result.ok) throw new Error(payload.error || `Could not read ${file.name}.`);
+        if (payload.text.trim()) extracted.push(payload.text.trim());
+      }
+      if (extracted.length) $("text-input").value += `${$("text-input").value.trim() ? "\n\n" : ""}${extracted.join("\n\n")}`;
+      $("text-file-status").textContent = `${files.length} file${files.length === 1 ? "" : "s"} processed. Review the extracted text before rendering.`;
+    } catch (error) { $("text-file-status").textContent = error.message; }
+  });
+  $("reroll-text").addEventListener("click", () => { textSeed=Math.floor(Math.random()*1e6); renderText(); });
+
+  let studyInitialized=false, studyLessonId="dijkstra-r3", studyLessonMeta=null;
+  let studyResult=null, studyRevealIds=[], studySeed=7, studyScale=1, studySelectedId=null;
+  let studyStates={}, studyTypedAnswers={}, studyCanvases=new Map(), studyNeatness=0.55, studyCompareOpen=false;
+  async function studyRequest(path, options={}) {
+    const response=await fetch(path,{headers:{"Content-Type":"application/json",...(options.headers||{})},...options});
+    if(!response.ok){let message=response.statusText;try{const payload=await response.json();message=payload.error||payload.detail||message;}catch{}throw new Error(message);}
+    return response;
+  }
+  async function initStudy() {
+    if(studyInitialized)return;
+    studyInitialized=true;$("study-status").textContent="Loading lessons…";
+    try{
+      const response=await studyRequest("/study/lessons"),data=await response.json();
+      $("study-lesson").replaceChildren(...data.lessons.map(lesson=>{const option=document.createElement("option");option.value=lesson.id;option.textContent=lesson.subtitle?lesson.title+" · "+lesson.subtitle:lesson.title;return option;}));
+      if(!data.lessons.length)throw new Error("No practice lessons are available.");
+      studyLessonId=data.lessons[0].id;await loadStudyLesson([],studySeed);
+    }catch(error){studyInitialized=false;$("study-status").textContent=error.message;}
+  }
+  async function loadStudyLesson(revealIds=studyRevealIds,nextSeed=studySeed) {
+    $("study-status").textContent="Rendering handwritten practice page…";$("study-stage").setAttribute("aria-busy","true");
+    try{
+      if(!studyLessonMeta||studyLessonMeta.id!==studyLessonId){const metaResponse=await studyRequest("/study/lessons/"+encodeURIComponent(studyLessonId));studyLessonMeta=await metaResponse.json();}
+      const body={lesson_id:studyLessonId,profile:"profiles/"+$("study-profile").value,ink:"#0c582a",size:40,width:1100,paper:"lined",seed:nextSeed,neatness:studyNeatness,mode:"study",reveal:revealIds};
+      const response=await studyRequest("/study/render",{method:"POST",body:JSON.stringify(body)});studyResult=await response.json();
+      studyRevealIds=revealIds.slice();studySeed=nextSeed;
+      if(!studyResult.blanks.some(blank=>blank.id===studySelectedId))studySelectedId=null;
+      drawStudyPage();updateStudyScore();updateStudySelection();$("study-page-title").textContent=studyLessonMeta.title||"Handwritten practice page";
+      $("study-status").textContent="Practice page ready. Write in a blank, check an answer, or sketch in the redraw area.";
+    }catch(error){$("study-status").textContent=error.message;}
+    finally{$("study-stage").removeAttribute("aria-busy");}
+  }
+  function layoutStudyPage() {
+    if(!studyResult)return;
+    studyScale=Math.min(1,Math.max(0.25,(window.innerWidth-360)/studyResult.width));
+    const page=$("study-page");page.style.width=(studyResult.width*studyScale)+"px";
+    for(const blank of studyResult.blanks){
+      const layer=page.querySelector('[data-blank-id="'+CSS.escape(blank.id)+'"]');if(!layer)continue;
+      const b=blank.bbox;layer.style.left=(b[0]*studyScale)+"px";layer.style.top=(b[1]*studyScale)+"px";
+      layer.style.width=Math.max(10,(b[2]-b[0])*studyScale)+"px";layer.style.height=Math.max(10,(b[3]-b[1])*studyScale)+"px";
+      const canvas=studyCanvases.get(blank.id);if(canvas){canvas.style.width=layer.style.width;canvas.style.height=layer.style.height;}
+    }
+  }
+  function drawStudyPage() {
+    if(!studyResult)return;
+    const page=$("study-page");page.replaceChildren();page.hidden=false;$("study-empty").hidden=true;
+    const image=document.createElement("img");image.alt="Handwritten study practice page";image.src="data:image/png;base64,"+studyResult.image_b64;page.appendChild(image);
+    studyCanvases=new Map();
+    for(const blank of studyResult.blanks){
+      const layer=document.createElement("div");layer.className="study-blank-layer";layer.dataset.blankId=blank.id;
+      layer.dataset.status=studyStates[blank.id]?.status||"idle";if(studySelectedId===blank.id)layer.classList.add("selected");
+      const canvas=document.createElement("canvas");canvas.className="study-ink";
+      const b=blank.bbox,w=Math.max(8,b[2]-b[0]),h=Math.max(8,b[3]-b[1]),dpr=Math.min(window.devicePixelRatio||1,2);
+      canvas.width=Math.ceil(w*dpr);canvas.height=Math.ceil(h*dpr);
+      const ctx=canvas.getContext("2d");if(ctx){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#0c582a";ctx.lineWidth=blank.kind==="redraw"?2.4:2;}
+      let drawing=false;
+      canvas.addEventListener("pointerdown",event=>{
+        studySelectedId=blank.id;updateStudySelection();if(["correct","revealed"].includes(studyStates[blank.id]?.status))return;
+        canvas.setPointerCapture(event.pointerId);drawing=true;const rect=canvas.getBoundingClientRect(),c=canvas.getContext("2d");
+        c.beginPath();c.moveTo((event.clientX-rect.left)/studyScale,(event.clientY-rect.top)/studyScale);
+      });
+      canvas.addEventListener("pointermove",event=>{
+        if(!drawing)return;const rect=canvas.getBoundingClientRect(),c=canvas.getContext("2d");
+        c.lineTo((event.clientX-rect.left)/studyScale,(event.clientY-rect.top)/studyScale);c.stroke();
+      });
+      const stopDrawing=()=>{drawing=false;};canvas.addEventListener("pointerup",stopDrawing);canvas.addEventListener("pointercancel",stopDrawing);
+      layer.appendChild(canvas);
+      const tools=document.createElement("div");tools.className="study-blank-tools";tools.hidden=true;
+      if(blank.bbox[0]+(blank.bbox[2]-blank.bbox[0])/2>studyResult.width*0.68)tools.classList.add("align-end");
+      const actions=document.createElement("div");actions.className="tool-actions";
+      if(blank.kind!=="redraw"){
+        const check=document.createElement("button");check.type="button";check.textContent="Check";
+        check.disabled=["correct","revealed"].includes(studyStates[blank.id]?.status);
+        check.addEventListener("click",()=>{studySelectedId=blank.id;updateStudySelection();gradeStudyBlank();});actions.appendChild(check);
+      }
+      const clear=document.createElement("button");clear.type="button";clear.className="secondary";clear.textContent="Clear";
+      clear.addEventListener("click",()=>clearStudyInk(blank.id));actions.appendChild(clear);
+      if(blank.kind!=="redraw"){
+        const reveal=document.createElement("button");reveal.type="button";reveal.className="secondary";reveal.textContent="Reveal";
+        reveal.addEventListener("click",()=>revealStudyBlank(blank));actions.appendChild(reveal);
+      }
+      tools.appendChild(actions);
+      if(blank.kind!=="redraw"){
+        const answer=document.createElement("input");answer.type="text";answer.placeholder="Type what you wrote";
+        answer.value=studyTypedAnswers[blank.id]||"";answer.dataset.answerFor=blank.id;
+        answer.addEventListener("input",()=>{studyTypedAnswers[blank.id]=answer.value;});
+        answer.addEventListener("keydown",event=>{if(event.key==="Enter"){studySelectedId=blank.id;updateStudySelection();gradeStudyBlank();}});
+        tools.appendChild(answer);
+      }
+      const feedback=document.createElement("span");feedback.className="tool-feedback";feedback.dataset.feedbackFor=blank.id;
+      feedback.textContent=studyStates[blank.id]?.feedback||"";tools.appendChild(feedback);
+      layer.appendChild(tools);page.appendChild(layer);studyCanvases.set(blank.id,canvas);
+    }
+    layoutStudyPage();updateStudyCompare();
+  }
+  function updateStudyScore(){
+    const total=studyLessonMeta?.blank_ids?.length||0;
+    const completed=Object.values(studyStates).filter(state=>state.status==="correct"||state.status==="revealed").length;
+    $("study-score").textContent=completed+" / "+total+" blanks completed";
+  }
+  function updateStudySelection(){
+    const blank=studyResult?.blanks.find(item=>item.id===studySelectedId);
+    document.querySelectorAll(".study-blank-layer").forEach(layer=>{
+      const id=layer.dataset.blankId;layer.classList.toggle("selected",id===studySelectedId);layer.dataset.status=studyStates[id]?.status||"idle";
+      const tools=layer.querySelector(".study-blank-tools");if(tools)tools.hidden=id!==studySelectedId;
+      const feedback=layer.querySelector("[data-feedback-for]");if(feedback)feedback.textContent=studyStates[id]?.feedback||"";
+    });
+    $("study-check").disabled=!blank||blank.kind==="redraw"||["correct","revealed"].includes(studyStates[blank?.id]?.status);
+    $("study-clear").disabled=!blank;$("study-reveal").disabled=!blank||blank.kind==="redraw";
+    $("study-answer").disabled=!blank||blank.kind==="redraw";$("study-answer").value=blank?(studyTypedAnswers[blank.id]||""):"";
+    $("study-feedback").textContent=blank?(studyStates[blank.id]?.feedback||""):"";
+    $("study-selected-hint").textContent=blank?blank.id+" · "+blank.kind+(blank.hint?" · "+blank.hint:""):"Select an underlined blank or a graph area to practice.";
+  }
+  async function gradeStudyBlank(){
+    const blank=studyResult?.blanks.find(item=>item.id===studySelectedId);if(!blank||blank.kind==="redraw")return;
+    $("study-check").disabled=true;$("study-feedback").textContent="Checking…";
+    try{
+      const canvas=studyCanvases.get(blank.id),imageB64=canvas?.toDataURL("image/png").split(",")[1]||"";
+      const popupAnswer=document.querySelector('[data-answer-for="'+CSS.escape(blank.id)+'"]')?.value||"";
+      const clientRead=popupAnswer.trim()||$("study-answer").value.trim();
+      const response=await studyRequest("/study/grade",{method:"POST",body:JSON.stringify({blank_id:blank.id,answer:blank.answer,hint:blank.hint||"",kind:blank.kind||"",image_b64:imageB64,client_read:clientRead||undefined})});
+      const result=await response.json();
+      if(result.needs_read||result.empty){
+        // Couldn't grade (empty canvas, unreadable ink, vision off/error): not the student's fault, so don't mark it wrong.
+        if(studyStates[blank.id]?.status==="wrong")delete studyStates[blank.id];
+        studyStates[blank.id]={status:"idle",feedback:result.hint||"Type what you wrote above, then check again."};
+      }else{
+        const viaInk=!!result.read&&result.method!=="client_read";
+        const misreadNote=viaInk&&result.confidence&&result.confidence!=="high"?" (Not what you wrote? Clear it, write a little bigger, or type it instead.)":"";
+        studyStates[blank.id]={status:result.correct?"correct":"wrong",feedback:result.correct?"Read as “"+(result.read||clientRead||"ok")+"” ✓":(viaInk?"I read “"+result.read+"” — not quite. ":"")+(result.hint||"Try again, or Reveal.")+misreadNote};
+      }
+      $("study-feedback").textContent=studyStates[blank.id].feedback;updateStudyScore();updateStudySelection();
+    }catch(error){$("study-feedback").textContent=error.message;}
+    finally{$("study-check").disabled=["correct","revealed"].includes(studyStates[blank.id]?.status);}
+  }
+  async function revealStudyBlank(blank){
+    if(!blank||blank.kind==="redraw")return;
+    studyStates[blank.id]={status:"revealed",feedback:"Answer: "+blank.answer};
+    studyRevealIds=Array.from(new Set([...studyRevealIds,blank.id]));$("study-feedback").textContent=studyStates[blank.id].feedback;updateStudyScore();
+    await loadStudyLesson(studyRevealIds,studySeed);
+  }
+  function updateStudyCompare(){
+    const redraw=studyResult?.blanks.find(blank=>blank.kind==="redraw");$("study-compare").disabled=!redraw;
+    $("study-compare").textContent=studyCompareOpen?"Hide reference overlay":"Show reference overlay";
+    $("study-reference-wrap").hidden=!studyCompareOpen||!redraw;
+    if(studyCompareOpen&&redraw?.ref_block)$("study-reference").src="/study/redraw/"+encodeURIComponent(studyLessonId)+"/"+encodeURIComponent(redraw.ref_block);
+  }
+  $("study-check").addEventListener("click",gradeStudyBlank);
+  $("study-answer").addEventListener("input",()=>{if(studySelectedId)studyTypedAnswers[studySelectedId]=$("study-answer").value;});
+  $("study-answer").addEventListener("keydown",event=>{if(event.key==="Enter")gradeStudyBlank();});
+  function clearStudyInk(blankId){
+    const canvas=studyCanvases.get(blankId);if(!canvas)return;const ctx=canvas.getContext("2d"),dpr=Math.min(window.devicePixelRatio||1,2);
+    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#0c582a";const blank=studyResult?.blanks.find(item=>item.id===blankId);ctx.lineWidth=blank?.kind==="redraw"?2.4:2;
+    if(studyStates[blankId]?.status==="wrong")delete studyStates[blankId];studySelectedId=blankId;updateStudySelection();
+  }
+  $("study-clear").addEventListener("click",()=>clearStudyInk(studySelectedId));
+  $("study-reveal").addEventListener("click",()=>revealStudyBlank(studyResult?.blanks.find(item=>item.id===studySelectedId)));
+  $("study-reveal-all").addEventListener("click",async()=>{
+    for(const blank of studyResult?.blanks||[])if(blank.kind!=="redraw")studyStates[blank.id]={status:"revealed",feedback:"Answer: "+blank.answer};
+    studyRevealIds=Array.from(new Set([...studyRevealIds,...(studyLessonMeta?.blank_ids||[])]));studySelectedId=null;updateStudyScore();
+    await loadStudyLesson(studyRevealIds,studySeed);
+  });
+  $("study-reroll").addEventListener("click",()=>{
+    studySeed=Math.floor(Math.random()*1e6);studyStates=Object.fromEntries(Object.entries(studyStates).filter(([,state])=>state.status==="revealed"));
+    studySelectedId=null;loadStudyLesson(studyRevealIds,studySeed);
+  });
+  $("study-refresh").addEventListener("click",()=>loadStudyLesson(studyRevealIds,studySeed));
+  $("study-lesson").addEventListener("change",()=>{
+    studyLessonId=$("study-lesson").value;studyLessonMeta=null;studyResult=null;studyRevealIds=[];studyStates={};studySelectedId=null;studyCompareOpen=false;
+    $("study-solver-result").hidden=true;$("study-reference-wrap").hidden=true;loadStudyLesson([],studySeed);
+  });
+  $("study-profile").addEventListener("change",()=>loadStudyLesson(studyRevealIds,studySeed));
+  $("study-neat").addEventListener("input",()=>$("study-neat-value").textContent=$("study-neat").value);
+  $("study-neat").addEventListener("change",()=>{studyNeatness=+$("study-neat").value;loadStudyLesson(studyRevealIds,studySeed);});
+  $("study-compare").addEventListener("click",()=>{studyCompareOpen=!studyCompareOpen;updateStudyCompare();});
+  $("study-solve").addEventListener("click",async()=>{
+    try{
+      const graph=studyLessonMeta?.blocks?.find(block=>block.type==="graph");if(!graph)throw new Error("This lesson has no graph to solve.");
+      const response=await studyRequest("/study/solve",{method:"POST",body:JSON.stringify({lesson_id:studyLessonId,graph:graph.id,source:graph.source||"R3",target:"A"})}),data=await response.json();
+      $("study-solver-result").textContent="Shortest path: "+(data.shortest?.path||[]).join(" → ")+"\nCost: "+data.shortest?.cost+"\nNext hop: "+data.shortest?.next_hop+"\n\nForwarding table:\n"+Object.entries(data.table||{}).map(([dest,info])=>dest+": next "+(info.next_hop||"—")+", cost "+(info.cost??"—")).join("\n");
+      $("study-solver-result").hidden=false;
+    }catch(error){$("study-status").textContent=error.message;}
+  });
+  $("study-export-pdf").addEventListener("click",async()=>{
+    try{
+      const body={lesson_id:studyLessonId,profile:"profiles/"+$("study-profile").value,ink:"#0c582a",size:40,width:1100,paper:"lined",seed:studySeed,neatness:studyNeatness,reveal:studyRevealIds,mode:"study"};
+      const response=await studyRequest("/study/export/pdf",{method:"POST",body:JSON.stringify(body)}),url=URL.createObjectURL(await response.blob()),link=document.createElement("a");
+      link.href=url;link.download=studyLessonId+".pdf";link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }catch(error){$("study-status").textContent=error.message;}
+  });
+  $("study-export-json").addEventListener("click",()=>{
+    if(!studyResult)return;const blob=new Blob([JSON.stringify(studyResult.document,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=studyLessonId+".json";link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  });
+  window.addEventListener("resize",layoutStudyPage);
+</script>
+<style>
+  [hidden]{display:none!important}
+  .ob-open{margin-left:auto}
+  .ob-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(32,40,33,.5)}
+  .ob-dialog{width:min(720px,100%);max-height:calc(100vh - 28px);overflow:auto;background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 18px 50px #1b2a2150;color:#202821}
+  .ob-dialog:focus{outline:none}
+  .ob-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .ob-top h2{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}
+  .ob-close{background:transparent;color:#65736a;padding:4px 10px;font-size:22px;line-height:1;border-radius:8px}
+  .ob-close:hover{background:#eaf0eb}
+  .ob-lede{margin:0 0 14px;color:#68766d;line-height:1.5}
+  .ob-steps{display:flex;gap:6px;margin:0 0 16px;padding:0;list-style:none;font-size:12px;font-weight:700;color:#8a968e}
+  .ob-steps li{flex:1;padding:6px 8px;border-radius:8px;background:#f1f4f1}
+  .ob-steps li.current{background:#eaf0eb;color:#253b30}
+  .ob-steps li.done{color:#365d47}
+  fieldset.ob-kinds{border:0;margin:0 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  fieldset.ob-kinds legend{font-size:12px;font-weight:700;color:#65736a;margin-bottom:6px;padding:0}
+  .ob-opt{display:block;border:1px solid #d7e0d8;border-radius:10px;padding:12px;cursor:pointer;line-height:1.4}
+  .ob-opt.selected{border-color:#365d47;background:#f1f6f2;box-shadow:0 0 0 1px #365d47}
+  .ob-opt input{margin-right:6px;accent-color:#365d47}
+  .ob-opt strong{font-size:14px}.ob-opt span{display:block;font-size:12.5px;color:#68766d;margin-top:3px}
+  .ob-downloads{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+  a.ob-btn{display:inline-block;text-decoration:none;border-radius:9px;padding:10px 14px;background:#293e34;color:#fff;font-weight:650}
+  a.ob-btn.secondary{background:#e8ede8;color:#293e34;border:1px solid #d3ddd4}
+  .ob-tips{margin:0 0 6px;padding-left:20px;color:#38483d;line-height:1.55;font-size:14px}
+  .ob-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .ob-foot .right{display:flex;gap:8px;margin-left:auto}
+  .ob-link{background:none;color:#65736a;padding:6px 4px;font-weight:600;text-decoration:underline}
+  .ob-thumb{max-width:100%;max-height:200px;margin-top:10px;border-radius:8px;border:1px solid #e1e7e1}
+  .ob-error{margin-top:12px;padding:10px 12px;border-radius:9px;background:#fdf1ec;border:1px solid #f0c9b8;color:#8a3a17;font-size:13.5px;line-height:1.45}
+  .ob-note{margin-top:12px;padding:10px 12px;border-radius:9px;background:#f4f7f2;border:1px solid #dfe7de;color:#38483d;font-size:13.5px;line-height:1.45}
+  .ob-result{width:100%;border:1px solid #e1e7e1;border-radius:10px;margin:6px 0 4px;display:block}
+  @media(max-width:600px){fieldset.ob-kinds{grid-template-columns:1fr}.ob-dialog{padding:18px 16px}}
+</style>
+
+<div class="ob-overlay" id="ob-modal" hidden>
+  <div class="ob-dialog" role="dialog" aria-modal="true" aria-labelledby="ob-title" tabindex="-1" id="ob-dialog">
+    <div class="ob-top">
+      <div><h2 id="ob-title">Write in your own handwriting</h2>
+        <p class="ob-lede">Fill in a one-time sheet with a pen, upload it, and everything you generate is built from your real strokes.</p></div>
+      <button class="ob-close" id="ob-close" aria-label="Close" type="button">&times;</button>
+    </div>
+    <ol class="ob-steps" id="ob-steps" aria-label="Progress">
+      <li data-step="1">1 · Get the sheet</li><li data-step="2">2 · Upload it</li><li data-step="3">3 · Try it out</li>
+    </ol>
+
+    <section id="ob-step-1">
+      <fieldset class="ob-kinds">
+        <legend>Choose a sheet</legend>
+        <label class="ob-opt selected"><input type="radio" name="ob-kind" value="full" checked><strong>Full sheet · recommended</strong>
+          <span>Letters, capitals, digits and punctuation, two samples of each so repeated letters vary. Roughly 10 minutes.</span></label>
+        <label class="ob-opt"><input type="radio" name="ob-kind" value="letters"><strong>Quick sheet</strong>
+          <span>Just a–z and A–Z, one sample each. Digits and symbols use plain stand-ins. Roughly 3 minutes.</span></label>
+      </fieldset>
+      <div class="ob-downloads">
+        <a class="ob-btn" id="ob-dl-png" href="/handwriting/template.png?kind=full" download>Download PNG · iPad or tablet</a>
+        <a class="ob-btn secondary" id="ob-dl-pdf" href="/handwriting/template.pdf?kind=full" download>Download PDF · print it</a>
+      </div>
+      <ul class="ob-tips">
+        <li>Write one character per box, sitting on the dashed line, with a dark pen or Pencil. Tails of g, j, p, q and y can dip into the shaded strip below it.</li>
+        <li>Fill in <strong>every</strong> box and keep each character from touching its box edges or its neighbours.</li>
+        <li>Write only on the sheet. Extra marks or notes confuse the reader.</li>
+        <li>Printed it? Photograph or scan it flat in good light. A slightly tilted or shadowed photo is fine.</li>
+      </ul>
+    </section>
+
+    <section id="ob-step-2" hidden>
+      <div class="field"><label for="ob-name">Name this handwriting</label><input id="ob-name" type="text" maxlength="40" value="my-handwriting" autocomplete="off"></div>
+      <div class="drop" id="ob-drop" style="margin-top:12px">
+        <strong id="ob-drop-title">Choose your filled-in sheet</strong>
+        <input id="ob-file" type="file" accept="image/png,image/jpeg,image/webp">
+        <span class="small" id="ob-file-name">PNG or JPEG · up to 10 MB · must be the <span id="ob-kind-label">full</span> sheet</span>
+        <img class="ob-thumb" id="ob-thumb" alt="Preview of your uploaded sheet" hidden>
+      </div>
+      <p class="small" style="margin:10px 0 0">Your sheet is processed by the app running on this computer. It isn’t sent to Claude.</p>
+      <div class="ob-error" id="ob-error" role="alert" hidden></div>
+    </section>
+
+    <section id="ob-step-3" hidden>
+      <p class="ob-lede" style="margin-bottom:8px">Here’s a sample written with your handwriting.</p>
+      <img class="ob-result" id="ob-result" alt="Sample text rendered in your handwriting" hidden>
+      <div class="ob-note" id="ob-note" hidden></div>
+    </section>
+
+    <div class="status" id="ob-status" role="status" aria-live="polite"></div>
+    <div class="ob-foot">
+      <button class="ob-link" id="ob-skip" type="button">Not now</button>
+      <div class="right">
+        <button class="secondary" id="ob-back" type="button" hidden>Back</button>
+        <button id="ob-next" type="button">I have my sheet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SEEN_KEY = "studyink.onboarding.dismissed";
+  const MAX_UPLOAD_EDGE = 2400, MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+  const KIND_LABELS = {full: "full", letters: "quick"};
+  let step = 1, kind = "full", file = null, builtProfile = null, lastFocus = null, busy = false;
+
+  const remember = () => { try { localStorage.setItem(SEEN_KEY, "1"); } catch (_) {} };
+  const hasSeen = () => { try { return localStorage.getItem(SEEN_KEY) === "1"; } catch (_) { return false; } };
+
+  function setError(message) { $("ob-error").textContent = message || ""; $("ob-error").hidden = !message; }
+
+  function render() {
+    for (let i = 1; i <= 3; i++) $("ob-step-" + i).hidden = i !== step;
+    document.querySelectorAll("#ob-steps li").forEach(li => {
+      const n = +li.dataset.step;
+      li.classList.toggle("current", n === step); li.classList.toggle("done", n < step);
+      if (n === step) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+    });
+    $("ob-back").hidden = step !== 2;
+    $("ob-next").textContent = step === 1 ? "I have my sheet" : step === 2 ? "Build my handwriting" : "Use this handwriting";
+    $("ob-next").disabled = busy || (step === 2 && !file);
+    $("ob-skip").textContent = step === 3 ? "Try another sheet" : "Not now";
+    $("ob-kind-label").textContent = KIND_LABELS[kind];
+  }
+
+  function open() {
+    lastFocus = document.activeElement;
+    step = 1; file = null; builtProfile = null; busy = false; setError(""); $("ob-status").textContent = "";
+    $("ob-file").value = ""; $("ob-thumb").hidden = true;
+    $("ob-file-name").firstChild.textContent = "PNG or JPEG · up to 10 MB · must be the ";
+    $("ob-modal").hidden = false; render(); $("ob-dialog").focus();
+  }
+  function close(dismissed) {
+    if (dismissed) remember();
+    $("ob-modal").hidden = true;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  document.querySelectorAll('input[name="ob-kind"]').forEach(radio => radio.addEventListener("change", () => {
+    kind = radio.value;
+    document.querySelectorAll(".ob-opt").forEach(l => l.classList.toggle("selected", l.querySelector("input").checked));
+    $("ob-dl-png").href = "/handwriting/template.png?kind=" + kind;
+    $("ob-dl-pdf").href = "/handwriting/template.pdf?kind=" + kind;
+    render();
+  }));
+
+  $("ob-file").addEventListener("change", () => {
+    file = $("ob-file").files[0] || null; setError("");
+    if (file) {
+      $("ob-file-name").firstChild.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB · must be the `;
+      const url = URL.createObjectURL(file);
+      $("ob-thumb").src = url; $("ob-thumb").hidden = false;
+      $("ob-thumb").onload = () => URL.revokeObjectURL(url);
+    }
+    render();
+  });
+  $("ob-drop").addEventListener("dragover", e => e.preventDefault());
+  $("ob-drop").addEventListener("drop", e => {
+    e.preventDefault();
+    const dropped = Array.from(e.dataTransfer?.files || []).find(f => f.type.startsWith("image/"));
+    if (!dropped) return;
+    const t = new DataTransfer(); t.items.add(dropped); $("ob-file").files = t.files;
+    $("ob-file").dispatchEvent(new Event("change", {bubbles: true}));
+  });
+
+  // Phone photos can be huge; shrink before upload so they stay well under the server limit.
+  async function readyForUpload(f) {
+    let bitmap = null;
+    try { bitmap = await createImageBitmap(f, {imageOrientation: "from-image"}); } catch (_) { /* let the server try */ }
+    const oversize = f.size > MAX_UPLOAD_BYTES || (bitmap && Math.max(bitmap.width, bitmap.height) > 4000);
+    if (!bitmap || !oversize) { if (bitmap) bitmap.close(); return f; }
+    const scale = Math.min(1, MAX_UPLOAD_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
+    return await new Promise(resolve => canvas.toBlob(b => resolve(b || f), "image/jpeg", 0.92));
+  }
+  const toBase64 = blob => new Promise((resolve, reject) => {
+    const r = new FileReader(); r.onload = () => resolve(String(r.result).split(",")[1]); r.onerror = reject; r.readAsDataURL(blob);
+  });
+
+  function refreshProfileSelects(profiles, choose) {
+    for (const id of ["profile", "text-profile", "study-profile"]) {
+      const sel = $(id); if (!sel) continue;
+      const current = sel.value;
+      sel.replaceChildren(...profiles.map(p => new Option(p.name, p.name)));
+      sel.value = choose && profiles.some(p => p.name === choose) ? choose : current;
+    }
+  }
+
+  async function build() {
+    const name = $("ob-name").value.trim();
+    if (!name) { setError("Give your handwriting a name first."); $("ob-name").focus(); return; }
+    busy = true; setError(""); render(); $("ob-status").textContent = "Reading your handwriting…";
+    try {
+      const upload = await readyForUpload(file);
+      const response = await fetch("/handwriting/upload", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({name, kind, image_base64: await toBase64(upload)})});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Something went wrong reading that sheet.");
+      builtProfile = data.profile;
+      refreshProfileSelects(data.profiles, null);
+      $("ob-result").src = "data:image/png;base64," + data.preview_b64; $("ob-result").hidden = false;
+      const notes = [];
+      if (data.kind === "letters") notes.push("Digits and punctuation use plain stand-in strokes. Fill in a full sheet later for those to match too.");
+      if (data.flagged && data.flagged.length) notes.push(`${data.flagged.length} character${data.flagged.length === 1 ? " looks" : "s look"} unusually inconsistent between samples. If any letters in the sample look off, redo that sheet with a bit more care.`);
+      $("ob-note").textContent = notes.join(" "); $("ob-note").hidden = !notes.length;
+      step = 3; $("ob-status").textContent = "";
+    } catch (err) {
+      setError(err.message); $("ob-status").textContent = "";
+    } finally { busy = false; render(); }
+  }
+
+  function useIt() {
+    refreshProfileSelects(Array.from($("profile").options).map(o => ({name: o.value})), builtProfile);
+    // Fill in the Ink re-renders on change; only nudge it once it has been opened, otherwise it reads the value on first open.
+    if ($("study-view").classList.contains("active")) $("study-profile").dispatchEvent(new Event("change", {bubbles: true}));
+    remember(); close(false);
+  }
+
+  $("ob-next").addEventListener("click", () => {
+    if (busy) return;
+    if (step === 1) { step = 2; setError(""); render(); $("ob-name").focus(); }
+    else if (step === 2) build();
+    else useIt();
+  });
+  $("ob-back").addEventListener("click", () => { step = 1; setError(""); render(); });
+  $("ob-skip").addEventListener("click", () => {
+    if (step === 3) { step = 1; file = null; $("ob-file").value = ""; $("ob-thumb").hidden = true; $("ob-result").hidden = true; render(); }
+    else close(true);
+  });
+  $("ob-close").addEventListener("click", () => close(true));
+  $("ob-modal").addEventListener("mousedown", e => { if (e.target === $("ob-modal")) close(true); });
+  $("ob-modal").addEventListener("keydown", e => {
+    if (e.key === "Escape") { close(true); return; }
+    if (e.key !== "Tab") return;
+    const items = Array.from($("ob-dialog").querySelectorAll("a[href],button,input,select,textarea"))
+      .filter(el => !el.disabled && el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === $("ob-dialog"))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  $("open-onboarding").addEventListener("click", open);
+
+  // First visit: invite the student to add their handwriting, unless they already have or have said no.
+  if (!hasSeen()) {
+    fetch("/handwriting/profiles").then(r => r.json()).then(d => {
+      if (!(d.profiles || []).some(p => p.custom)) open();
+    }).catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

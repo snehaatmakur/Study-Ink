@@ -1,0 +1,163 @@
+{
+  "id": "dijkstra-r3",
+  "title": "Dijkstra's Algorithm",
+  "subtitle": "CS 168 · shortest paths from one source",
+  "blocks": [
+    {
+      "type": "text",
+      "id": "t1",
+      "runs": [
+        {"t": "Finds the shortest path from "},
+        {"blank": "b_def", "answer": "one source to all others", "width": 340, "hint": "What does Dijkstra compute?"},
+        {"t": "."}
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "h_graph",
+      "text": "The R3 network"
+    },
+    {
+      "type": "graph",
+      "id": "g_r3",
+      "source": "R3",
+      "node_radius": 30,
+      "nodes": [
+        {"id": "R1", "x": 220, "y": 70},
+        {"id": "R2", "x": 90, "y": 170},
+        {"id": "R3", "x": 90, "y": 310},
+        {"id": "R5", "x": 320, "y": 170},
+        {"id": "R4", "x": 450, "y": 70},
+        {"id": "A", "x": 580, "y": 70},
+        {"id": "B", "x": 220, "y": 280}
+      ],
+      "edges": [
+        {"u": "R3", "v": "R2", "w": 1},
+        {"u": "R2", "v": "R1", "w": 1},
+        {"u": "R1", "v": "R5", "w": 1},
+        {"u": "R5", "v": "R4", "w": 1},
+        {"u": "R4", "v": "A", "w": 1},
+        {"u": "R3", "v": "R5", "w": 7},
+        {"u": "R2", "v": "B", "w": 4},
+        {"u": "R1", "v": "R4", "w": 10, "blank": "b_edge_r1r4"},
+        {"u": "R5", "v": "B", "w": 2}
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "h_flow",
+      "text": "How it works"
+    },
+    {
+      "type": "flow",
+      "id": "f_steps",
+      "box_width": 920,
+      "steps": [
+        "Set cost(source) = 0, all others = infinity",
+        {"text": "Pick unvisited node U with smallest cost", "blank": "b_step2"},
+        "Relax each neighbor V of U if a cheaper path is found",
+        "Remember U as V's previous hop; mark U visited",
+        "Repeat until every node is visited"
+      ],
+      "blanks": [
+        {"id": "b_step2", "answer": "Pick unvisited node U with smallest cost"}
+      ]
+    },
+    {
+      "type": "heading",
+      "id": "h_table",
+      "text": "R3's forwarding table"
+    },
+    {
+      "type": "table",
+      "id": "tbl_r3",
+      "graph": "g_r3",
+      "source": "R3",
+      "headers": ["Destination", "Next hop", "Cost"],
+      "col_widths": [200, 180, 140],
+      "rows": [
+        {"dest": "A", "blank_hop": "b_hop_a", "blank_cost": "b_cost_a"},
+        {"dest": "B", "blank_hop": "b_hop_b", "blank_cost": "b_cost_b"},
+        {"dest": "R4", "hop": "R2", "cost": 4}
+      ]
+    },
+    {
+      "type": "question",
+      "id": "q_nexthop",
+      "blank": "b_q_hop",
+      "prompt": "Next hop from R3 to reach A?",
+      "solver": "next_hop",
+      "graph": "g_r3",
+      "source": "R3",
+      "target": "A",
+      "hint": "Follow the cheapest path's first hop",
+      "width": 160
+    },
+    {
+      "type": "question",
+      "id": "q_cost",
+      "blank": "b_q_cost",
+      "prompt": "Cheapest cost from R3 to A?",
+      "solver": "cost",
+      "graph": "g_r3",
+      "source": "R3",
+      "target": "A",
+      "hint": "Sum the edge weights on the shortest path",
+      "width": 100
+    },
+    {
+      "type": "heading",
+      "id": "h_compare",
+      "text": "Dijkstra vs Bellman-Ford"
+    },
+    {
+      "type": "compare",
+      "id": "cmp_algos",
+      "col_width": 340,
+      "left": {
+        "title": "Dijkstra",
+        "items": [
+          "Non-negative weights only",
+          {"text": "Greedy: settle closest next", "blank": "b_dij"},
+          "Faster on typical graphs"
+        ]
+      },
+      "right": {
+        "title": "Bellman-Ford",
+        "items": [
+          "Handles negative weights",
+          "Relaxes every edge |V|-1 times",
+          "Detects negative cycles"
+        ]
+      }
+    },
+    {
+      "type": "heading",
+      "id": "h_map",
+      "text": "Concept map"
+    },
+    {
+      "type": "conceptmap",
+      "id": "cm1",
+      "nodes": [
+        {"id": "c1", "label": "shortest path", "x": 280, "y": 40},
+        {"id": "c2", "label": "priority queue", "x": 100, "y": 150},
+        {"id": "c3", "label": "relaxation", "x": 280, "y": 150, "blank": "b_relax"},
+        {"id": "c4", "label": "non-negative w", "x": 460, "y": 150}
+      ],
+      "edges": [
+        {"from": "c1", "to": "c2", "label": "uses"},
+        {"from": "c1", "to": "c3", "label": "via"},
+        {"from": "c1", "to": "c4", "label": "needs"}
+      ]
+    },
+    {
+      "type": "redraw",
+      "id": "rd_graph",
+      "ref": "g_r3",
+      "prompt": "Redraw mode · sketch the R3 graph from memory, then compare",
+      "height": 380,
+      "width": 900
+    }
+  ]
+}
